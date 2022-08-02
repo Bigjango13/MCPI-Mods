@@ -5,11 +5,10 @@ set(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc)
 set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
 
 # Start Project
-project(mcpi-competition)
+project(my-mcpi-mods)
 
-# Include SDK
-include("$ENV{HOME}/.minecraft-pi/sdk/lib/minecraft-pi-reborn-client/sdk/sdk.cmake")
+set(MODS_BEING_BUILD "all")
 
-# Build the jetpack
-add_library(jetpack SHARED week-1/jetpack.cpp)
-target_link_libraries(jetpack mods-headers reborn-patch symbols misc mods-headers media-layer-core)
+# Build all the dirs
+add_subdirectory(extended-creative-inventory)
+add_subdirectory(mcpi-competition)
