@@ -14,3 +14,6 @@ include("$ENV{HOME}/.minecraft-pi/sdk/lib/minecraft-pi-reborn-client/sdk/sdk.cma
 # Build
 add_library(hud SHARED hud.cpp)
 target_link_libraries(hud mods-headers reborn-patch symbols misc)
+
+add_library(block_logging SHARED block_logging.cpp)
+target_link_libraries(block_logging mods-headers reborn-patch symbols misc)

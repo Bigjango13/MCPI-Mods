@@ -5,6 +5,7 @@ This repo holds many of my MCPI mods.
 So far the mods are:
 - [Extended Creative Inventory](extended-creative-inventory)
 - [Jetpack](mcpi-competition/week-1)
+- And a few more mods in [Misc](misc).
 
 # Building
 

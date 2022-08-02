@@ -12,3 +12,4 @@ set(MODS_BEING_BUILD "all")
 # Build all the dirs
 add_subdirectory(extended-creative-inventory)
 add_subdirectory(mcpi-competition)
+add_subdirectory(misc)
