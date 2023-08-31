@@ -31,7 +31,7 @@ int format_hud(char *str, __attribute__((unused)) const char *format, ...){
     unsigned char *command_server = *(unsigned char **) (get_minecraft() + Minecraft_command_server_property_offset);
     unsigned char *offsetData = (unsigned char *)(command_server + 0x1c);
     ungetOffset(offsetData, &x, &y, &z);
-    char new_format[50];
+    char new_format[200];
     if (!in_local_world()){
         std::string server_format = hud_format + ":%s";
         std::string players_str;
