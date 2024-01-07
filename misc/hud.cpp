@@ -1,15 +1,15 @@
 #include <cstdio>
+#include <iomanip>
+#include <sstream>
 
 #include <libreborn/libreborn.h>
 #include <symbols/minecraft.h>
 
-extern "C"{
-    unsigned char *get_minecraft();
-    std::string get_world_name();
-    bool in_local_world();
+#define MAX_LEN (255 - 1)
+unsigned char *minecraft = NULL;
+void on_tick(unsigned char *mcpi) {
+    minecraft = mcpi;
 }
-
-std::string hud_format = "%.2f, %.2f, %.2f  (%.2f, %.2f, %.2f)\nMCPI-Reborn\n\n%s";
 
 void ungetOffset(unsigned char *offsetData, float *x, float *y, float *z){
     // Removes the offset from the xyz.
@@ -19,35 +19,30 @@ void ungetOffset(unsigned char *offsetData, float *x, float *y, float *z){
 }
 
 int format_hud(char *str, __attribute__((unused)) const char *format, ...){
-    // Thanks https://stackoverflow.com/a/6229861
-    unsigned char *player = *(unsigned char **) (get_minecraft() + Minecraft_player_property_offset);
+    unsigned char *player = *(unsigned char **) (minecraft + Minecraft_player_property_offset);
     if (player == NULL) return 0;
     float x = *(float *) (player + Entity_x_property_offset);
     float y = *(float *) (player + Entity_y_property_offset);
     float z = *(float *) (player + Entity_z_property_offset);
-    float realX = x;
-    float realY = y;
-    float realZ = z;
-    unsigned char *command_server = *(unsigned char **) (get_minecraft() + Minecraft_command_server_property_offset);
+    unsigned char *command_server = *(unsigned char **) (minecraft + Minecraft_command_server_property_offset);
     unsigned char *offsetData = (unsigned char *)(command_server + 0x1c);
     ungetOffset(offsetData, &x, &y, &z);
-    char new_format[200];
-    if (!in_local_world()){
-        std::string server_format = hud_format + ":%s";
-        std::string players_str;
-        unsigned char *level = *(unsigned char **) (get_minecraft() + Minecraft_level_property_offset);
-        std::vector<unsigned char *> players = *(std::vector<unsigned char *> *) (level + Level_players_property_offset);
-        for (unsigned char* player : players) {
-            players_str += "\n  ";
-            players_str += *((std::string *) (player + Player_username_property_offset));
+
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(2) << x << ", " <<  y << ", " << z << "\nMCPI-Reborn (FG6 edition)\n";
+
+    unsigned char *level = *(unsigned char **) (minecraft + Minecraft_level_property_offset);
+    if (level) {
+        std::vector<unsigned char *> *players = (std::vector<unsigned char *> *) (level + Level_players_property_offset);
+        for (unsigned char *player : *players) {
+            if (player == NULL) continue;
+            std::string *name = (std::string *) (player + Player_username_property_offset);
+            stream << "\n" << *name;
         }
-        sprintf(new_format, server_format.c_str(), x, y, z, realX, realY, realZ, get_world_name().c_str(), players_str.c_str());
-        //INFO("%s", new_format);
-    } else {
-        sprintf(new_format, hud_format.c_str(), x, y, z, realX, realY, realZ, get_world_name().c_str());
-        //ERR("%s", new_format);
     }
-    sprintf(str, "%s", new_format);
+
+    memcpy(str, stream.str().c_str(), MAX_LEN);
+
     return 0;
 }
 
