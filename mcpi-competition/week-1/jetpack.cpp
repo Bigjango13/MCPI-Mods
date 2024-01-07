@@ -37,6 +37,7 @@ static void mcpi_callback(unsigned char *minecraft){
     }
 }
 
+bool is_jetpacking = false;
 float jetpackY = -255;
 HOOK(SDL_PollEvent, int, (SDL_Event *event)) {
     // Poll Events
@@ -92,8 +93,7 @@ void Mob_causeFallDamage_injection(unsigned char *mob, float dist){
 }
 
 // Custom jetpack item
-unsigned char *jetpack;
-unsigned char *make_jetpack(){
+void make_jetpack(__attribute__((unused)) unsigned char *null){
     // Jetpack
     unsigned char *item = (unsigned char *) ::operator new(0x34); // ARMOR_SIZE
     ALLOC_CHECK(item);
@@ -112,12 +112,6 @@ unsigned char *make_jetpack(){
     *(int32_t *) (item + Item_category_property_offset) = 2;
     *(int32_t *) (item + Item_max_damage_property_offset) = 250;
     *(int32_t *) (item + Item_max_stack_size_property_offset) = 1;
-
-    return item;
-}
-
-static void Item_initItems_injection(__attribute__((unused)) unsigned char *null) {
-    jetpack = make_jetpack();
 }
 
 // Add jetpack to creative inventory
@@ -178,6 +172,6 @@ __attribute__((constructor)) static void init() {
     misc_run_on_update(mcpi_callback);
     overwrite_calls((void*) Mob_causeFallDamage, (void*) Mob_causeFallDamage_injection);
     misc_run_on_creative_inventory_setup(Inventory_setupDefault_FillingContainer_addItem_call_injection);
-    misc_run_on_items_setup(Item_initItems_injection);
+    misc_run_on_items_setup(make_jetpack);
     misc_run_on_recipes_setup(Recipes_injection);
 }
