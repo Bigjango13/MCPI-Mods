@@ -1,8 +1,5 @@
-#include <SDL/SDL.h>
-
 #include <libreborn/libreborn.h>
 #include <symbols/minecraft.h>
-#include <mods/misc/misc.h>
 
 typedef unsigned char uchar;
 static uint32_t Gui_numSlots_property_offset = 0xa38; // int
