@@ -36,7 +36,7 @@ int FillingContainer_getSlot2(uchar *fillingContainer, int id, int aux) {
 }
 
 // My code
-int unlink_slot(uchar *fillingContainer, int linked_slot) {
+static int unlink_slot(uchar *fillingContainer, int linked_slot) {
     if (linked_slot == -1) return -1;
     int linked_slots_length = *(int *) (fillingContainer + FillingContainer_linked_slots_length_property_offset);
     int *linked_slots = *(int **) (fillingContainer + FillingContainer_linked_slots_property_offset);
@@ -47,7 +47,7 @@ int unlink_slot(uchar *fillingContainer, int linked_slot) {
     return -1;
 }
 
-bool is_middle_click = false;
+static bool is_middle_click = false;
 HOOK(SDL_PollEvent, int, (SDL_Event *event)) {
     ensure_SDL_PollEvent();
     int ret = (*real_SDL_PollEvent)(event);
@@ -57,7 +57,22 @@ HOOK(SDL_PollEvent, int, (SDL_Event *event)) {
     return ret;
 }
 
-MouseBuildInput_tickBuild_t MouseBuildInput_tickBuild_original = NULL;
+static void swap_to_held_slot(uchar *inventory, int new_slot) {
+    int slot = *(int *) (inventory + Inventory_selectedSlot_property_offset);
+    int unlinked = unlink_slot(inventory, new_slot);
+    if (unlinked != -1) {
+        // In the hotbar
+        int *linked_slots = *(int **) (inventory + FillingContainer_linked_slots_property_offset);
+        int old = linked_slots[slot];
+        linked_slots[slot] = linked_slots[unlinked];
+        linked_slots[unlinked] = old;
+    } else {
+        // Not in the hotbar
+        FillingContainer_linkSlot(inventory, slot, new_slot, false);
+    }
+}
+
+static MouseBuildInput_tickBuild_t MouseBuildInput_tickBuild_original = NULL;
 static int MouseBuildInput_tickBuild_injection(uchar *mouse_build_input, uchar *player, uint *build_action_intention_return) {
     // Call Original Method
     int ret = (*MouseBuildInput_tickBuild_original)(mouse_build_input, player, build_action_intention_return);
@@ -75,45 +90,34 @@ static int MouseBuildInput_tickBuild_injection(uchar *mouse_build_input, uchar *
 
     // Get inventory and held item
     uchar *inventory = *(uchar **) (player + Player_inventory_property_offset);
-    int slot = *(int *) (inventory + Inventory_selectedSlot_property_offset);
-    uchar *inventory_vtable = *(uchar **) inventory;
-    FillingContainer_getItem_t FillingContainer_getItem = *(FillingContainer_getItem_t *) (inventory_vtable + FillingContainer_getItem_vtable_offset);
-    ItemInstance *inventory_item = (*FillingContainer_getItem)(inventory, slot);
 
     // Search the inventory for it
     int new_slot = FillingContainer_getSlot2(inventory, id, data);
     if (new_slot != -1) {
         // It exists! Now swap to it.
-        int unlinked = unlink_slot(inventory, new_slot);
-        if (unlinked != -1) {
-            // In the hotbar
-            int *linked_slots = *(int **) (inventory + FillingContainer_linked_slots_property_offset);
-            int old = linked_slots[slot];
-            linked_slots[slot] = linked_slots[unlinked];
-            linked_slots[unlinked] = old;
-        } else {
-            // Not in the hotbar
-            FillingContainer_linkSlot(inventory, slot, new_slot, false);
-        }
+        swap_to_held_slot(inventory, new_slot);
     } else if (Minecraft_isCreativeMode(minecraft)) {
         // Creative mode, just set the slot to it
+        // Init
         ItemInstance *new_item = (ItemInstance *) ::operator new(sizeof(ItemInstance));
         new_item->id = id;
         new_item->auxiliary = data;
         new_item->count = 64;
+        // Get the slot
+        int slot = *(int *) (inventory + Inventory_selectedSlot_property_offset);
+        uchar *inventory_vtable = *(uchar **) inventory;
+        FillingContainer_getItem_t FillingContainer_getItem = *(FillingContainer_getItem_t *) (inventory_vtable + FillingContainer_getItem_vtable_offset);
+        ItemInstance *inventory_item = (*FillingContainer_getItem)(inventory, slot);
         if (inventory_item) {
             // Set the held slot
             *inventory_item = *new_item;
             delete new_item;
         } else {
             // Add
-            int new_slot = FillingContainer_getFreeSlot(inventory);
-            ItemInstance **items = *(ItemInstance***) (inventory + 0x18);
-            items[new_slot] = new_item;
-
+            new_slot = FillingContainer_getFreeSlot(inventory);
+            Inventory_add(inventory, new_item);
             // Swap
-            int *linked_slots = *(int **) (inventory + FillingContainer_linked_slots_property_offset);
-            linked_slots[slot] = new_slot;
+            swap_to_held_slot(inventory, new_slot);
             // Don't delete new_item, MCPI will
         }
     }
