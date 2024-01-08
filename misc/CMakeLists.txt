@@ -25,3 +25,6 @@ target_link_libraries(pickblock mods-headers reborn-patch symbols misc)
 
 add_library(shiftclick SHARED shiftclick.cpp)
 target_link_libraries(shiftclick mods-headers reborn-patch symbols misc)
+
+add_library(shiftitems SHARED shiftitems.cpp)
+target_link_libraries(shiftitems mods-headers reborn-patch symbols misc)
