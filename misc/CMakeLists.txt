@@ -31,3 +31,6 @@ target_link_libraries(shiftitems mods-headers reborn-patch symbols misc)
 
 add_library(extraslot SHARED extraslot.cpp)
 target_link_libraries(extraslot mods-headers reborn-patch symbols misc)
+
+add_library(invscrolling SHARED invscrolling.cpp)
+target_link_libraries(invscrolling mods-headers reborn-patch symbols misc)
