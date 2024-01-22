@@ -1,6 +1,9 @@
 #include <libreborn/libreborn.h>
 #include <symbols/minecraft.h>
 
+// Reborn symbol split fix
+#define LocalPlayer_vtable_base ((LocalPlayer_vtable *) 0x106230)
+
 static int Tile_use_injection(Tile *tile, Level *level, int x, int y, int z, Player *player) {
     // Don't allow block interactions when sneaking
     if (

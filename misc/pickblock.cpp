@@ -4,13 +4,17 @@
 #include <symbols/minecraft.h>
 #include <mods/misc/misc.h>
 
+// Reborn symbol split fix
 #define FillingContainer_setItem ((FillingContainer_setItem_t) 0x91b00)
 #define Inventory_add ((Inventory_add_t) 0x8d078)
+#define FillingContainer_linkSlot ((FillingContainer_linkSlot_t) 0x92188)
 #define FillingContainer_linkEmptySlot ((FillingContainer_linkEmptySlot_t) 0x92590)
 #define FillingContainer_getFreeSlot ((FillingContainer_getFreeSlot_t) 0x91ffc)
 #define Inventory_moveToSelectedSlot ((Inventory_moveToSelectedSlot_t) 0x8d148)
 #define Level_getTile ((Level_getTile_t) 0xa3380)
 #define Level_getData ((Level_getData_t) 0xa3324)
+#define MouseBuildInput_tickBuild_vtable_addr ((MouseBuildInput_tickBuild_t *) 0x102564)
+#define Minecraft_isCreativeMode ((Minecraft_isCreativeMode_t) 0x17270)
 
 // Decompiled from libminecraftpe
 int FillingContainer_getSlot2(FillingContainer *self, int id, int aux) {

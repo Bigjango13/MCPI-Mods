@@ -1,9 +1,6 @@
 #include <libreborn/libreborn.h>
 #include <symbols/minecraft.h>
 
-typedef unsigned char uchar;
-static uint32_t Gui_numSlots_property_offset = 0xa38; // int
-
 void GuiComponent_blit_injection() {}
 
 Gui_renderToolBar_t Gui_renderToolBar_original = NULL;
