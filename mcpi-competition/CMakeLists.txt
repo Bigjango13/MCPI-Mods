@@ -15,7 +15,7 @@ include("$ENV{HOME}/.minecraft-pi/sdk/lib/minecraft-pi-reborn-client/sdk/sdk.cma
 
 # Build the jetpack
 add_library(jetpack SHARED week-1/jetpack.cpp)
-target_link_libraries(jetpack mods-headers reborn-patch symbols misc mods-headers media-layer-core)
+target_link_libraries(jetpack mods-headers reborn-patch misc media-layer-core)
 
 # Install custom jetpack textures
 install(FILES week-1/images/jetpack_1.png DESTINATION "$ENV{HOME}/.minecraft-pi/overrides/images/armor")

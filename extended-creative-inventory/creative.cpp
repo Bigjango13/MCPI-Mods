@@ -2,10 +2,11 @@
 #include <symbols/minecraft.h>
 #include <mods/misc/misc.h>
 
-// The array of items, needed to patching
-unsigned char **Item_items = (unsigned char **) 0x17b250;
+// Reborn symbol split fix
+#define Item_items_pointer (Item **) 0x17b250
+#define FillingContainer_addItem ((FillingContainer_addItem_t) 0x92aa0)
 
-// A macro to save space and make the code more readble
+// The code
 #define ADD_ITEM(item_id) \
     { \
         ItemInstance *ii = new ItemInstance; \
@@ -16,8 +17,7 @@ unsigned char **Item_items = (unsigned char **) 0x17b250;
         (*FillingContainer_addItem)(filling_container, ii); \
     }
 
-static void Inventory_setupDefault_FillingContainer_addItem_call_injection(unsigned char *filling_container) {
-    // Adds lots of items
+static void Inventory_setupDefault_FillingContainer_addItem_call_injection(FillingContainer *filling_container) {
     ADD_ITEM(26);
     ADD_ITEM(51);
     ADD_ITEM(63);

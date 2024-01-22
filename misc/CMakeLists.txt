@@ -34,3 +34,6 @@ target_link_libraries(extraslot mods-headers reborn-patch symbols misc)
 
 add_library(invscrolling SHARED invscrolling.cpp)
 target_link_libraries(invscrolling mods-headers reborn-patch symbols misc)
+
+add_library(dualwielding SHARED dualwielding.cpp)
+target_link_libraries(dualwielding mods-headers reborn-patch symbols misc)

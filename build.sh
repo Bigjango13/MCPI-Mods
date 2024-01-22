@@ -12,8 +12,10 @@ cmake -S"${dir}" -B.
 make
 mkdir -p ../out
 if [ "$dir" = ".." ];then
+    patchelf --remove-needed libsymbols.so */lib*.so
     cp */lib*.so ../out
 else
+    patchelf --remove-needed libsymbols.so lib*.so
     cp lib*.so ../out
 fi
 

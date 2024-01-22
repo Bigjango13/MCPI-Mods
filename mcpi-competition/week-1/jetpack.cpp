@@ -5,26 +5,28 @@
 
 #include <SDL/SDL.h>
 
-typedef ItemInstance *(*Player_getArmor_t)(unsigned char *player, int32_t slot);
-static Player_getArmor_t Player_getArmor = (Player_getArmor_t) 0x8fda4;
+// Reborn symbol split fix
+#define Player_getArmor ((Player_getArmor_t) 0x8fda4)
+#define ArmorItem_constructor ((ArmorItem_constructor_t) 0x9362c)
+#define ArmorMaterial_iron_pointer ((ArmorMaterial *) 0x17a7a8)
+#define FillingContainer_addItem ((FillingContainer_addItem_t) 0x92aa0)
+#define Recipes_addShapedRecipe_2 ((Recipes_addShapedRecipe_2_t) 0x9ca24)
+#define Level_addParticle ((Level_addParticle_t) 0xa449c)
 
-typedef void (*Mob_causeFallDamage_t)(unsigned char *mob, float dist);
+typedef void (*Mob_causeFallDamage_t)(Mob *mob, float dist);
 static Mob_causeFallDamage_t Mob_causeFallDamage = (Mob_causeFallDamage_t) 0x800a4;
-static uint32_t Player_jump_property_offset = 0x38; // float
 
-unsigned char **Material_iron = (unsigned char **) 0x17a7a8; // Material
-unsigned char **iron_1_png = (unsigned char **) 0x137c58; // std::string
+// Symbols
+uchar **iron_1_png = (unsigned char **) 0x137c58; // std::string
 
-typedef unsigned char *(*ArmorItem_t)(unsigned char *ArmorItem, int id, unsigned char **mat, int param_3, int param_4);
-static ArmorItem_t ArmorItem = (ArmorItem_t) 0x9362c;
-
-unsigned char *player;
-unsigned char *level;
-static void mcpi_callback(unsigned char *minecraft){
+// The code
+Player *player;
+Level *level;
+static void mcpi_callback(Minecraft *minecraft){
     // Runs on every tick, sets the player and level vars.
     if (minecraft == NULL) return;
-    player = *(unsigned char **) (minecraft + Minecraft_player_property_offset);
-    level = *(unsigned char **) (minecraft + Minecraft_level_property_offset);
+    player = (Player *) minecraft->player;
+    level = minecraft->level;
     if (player != NULL){
         // Uses texture changing to have the jetpack texture work.
         ItemInstance *item = Player_getArmor(player, 1);
@@ -42,7 +44,7 @@ float jetpackY = -255;
 HOOK(SDL_PollEvent, int, (SDL_Event *event)) {
     // Poll Events
     ensure_SDL_PollEvent();
-    int ret = (*real_SDL_PollEvent)(event);
+    int ret = real_SDL_PollEvent(event);
     if (
         ret == 1
         // Make sure the event exists
@@ -57,75 +59,68 @@ HOOK(SDL_PollEvent, int, (SDL_Event *event)) {
         ItemInstance *item = Player_getArmor(player, 1);
         if (item != NULL){
             // Set the y for later adjustment of fall damage
-            jetpackY = *(float *) (player + Entity_y_property_offset);
+            jetpackY = player->y;
             if (item->id == 404){
                 // Fire particle
-                float x = *(float *) (player + Entity_x_property_offset);
-                float z = *(float *) (player + Entity_z_property_offset);
-                (*Level_addParticle)(level, "flame", x, jetpackY-1, z, 0.0, 0.0, 0.0, 0);
+                float x = player->x;
+                float z = player->z;
+                std::string flame = "flame";
+                Level_addParticle(level, &flame, x, jetpackY-1, z, 0.0, 0.0, 0.0, 0);
                 // Make the player jump, even if in midair
-                float jump_height = *(float *) (player + Player_jump_property_offset);
-                if (jump_height <= 0){
+                if (player->vel_y <= 0){
                     // If falling slow the fall.
-                    jump_height += .5;
+                    player->vel_y += .5;
                 } else {
                     // If not falling, go up a little
-                    jump_height += .1;
+                    player->vel_y += .1;
                 }
-                // Jump
-                *(float *) (player + Player_jump_property_offset) = jump_height;
             }
         }
     }
     return ret;
 }
 
-void Mob_causeFallDamage_injection(unsigned char *mob, float dist){
+void Mob_causeFallDamage_injection(Mob *mob, float dist){
     // The player is falling and has used the jetpack
-    if (mob == player && jetpackY != -255){
-        float newY = *(float *) (player + Entity_y_property_offset);
+    if (mob == (Mob *) player && jetpackY != -255){
+        float newY = player->y;
         // Adjust fall distance
         dist = (jetpackY - newY);
         jetpackY = -255;
     }
     // Call original method
-    (*Mob_causeFallDamage)(mob, dist);
+    Mob_causeFallDamage(mob, dist);
 }
 
 // Custom jetpack item
-void make_jetpack(__attribute__((unused)) unsigned char *null){
+void make_jetpack(__attribute__((unused)) void *null){
     // Jetpack
-    unsigned char *item = (unsigned char *) ::operator new(0x34); // ARMOR_SIZE
+    Item *item = (Item *) new ArmorItem;
     ALLOC_CHECK(item);
-    (*ArmorItem)(item, 148, Material_iron, 2, 1);
-    // Set VTable
-    unsigned char *vtable = *(unsigned char **) item;
-
-    // Get Functions
-    Item_setIcon_t Item_setIcon = *(Item_setIcon_t *) (vtable + Item_setIcon_vtable_offset);
-    Item_setDescriptionId_t Item_setDescriptionId = *(Item_setDescriptionId_t *) (vtable + Item_setDescriptionId_vtable_offset);
+    ArmorItem_constructor((ArmorItem *) item, 148, ArmorMaterial_iron_pointer, 2, 1);
 
     // Setup
-    (*Item_setIcon)(item, 13, 4);
-    (*Item_setDescriptionId)(item, "jetpack");
-    *(int32_t *) (item + Item_is_stacked_by_data_property_offset) = 1;
-    *(int32_t *) (item + Item_category_property_offset) = 2;
-    *(int32_t *) (item + Item_max_damage_property_offset) = 250;
-    *(int32_t *) (item + Item_max_stack_size_property_offset) = 1;
+    item->vtable->setIcon(item, 13, 4);
+    std::string name = "jetpack";
+    item->vtable->setDescriptionId(item, &name);
+    item->is_stacked_by_data = 1;
+    item->category = 2;
+    item->max_damage = 250;
+    item->max_stack_size = 1;
 }
 
 // Add jetpack to creative inventory
-static void Inventory_setupDefault_FillingContainer_addItem_call_injection(unsigned char *filling_container) {
+static void Inventory_setupDefault_FillingContainer_addItem_call_injection(FillingContainer *filling_container) {
     ItemInstance *jetpack_instance = new ItemInstance;
     ALLOC_CHECK(jetpack_instance);
     jetpack_instance->count = 255;
     jetpack_instance->auxiliary = 0;
     jetpack_instance->id = 404;
-    (*FillingContainer_addItem)(filling_container, jetpack_instance);
+    FillingContainer_addItem(filling_container, jetpack_instance);
 }
 
 // Crafting Recipes
-static void Recipes_injection(unsigned char *recipes) {
+static void Recipes_injection(Recipes *recipes) {
     // 2 Lava bucket
     Recipes_Type type1 = {
         .item = 0,
@@ -165,7 +160,10 @@ static void Recipes_injection(unsigned char *recipes) {
         .id = 404,
         .auxiliary = 0
     };
-    (*Recipes_addShapedRecipe_2)(recipes, result, " b ", "aca", {type1, type2, type3});
+    std::string line1 = " b ";
+    std::string line2 = "aca";
+    std::vector<Recipes_Type> types = {type1, type2, type3};
+    Recipes_addShapedRecipe_2(recipes, &result, &line1, &line2, &types);
 }
 
 __attribute__((constructor)) static void init() {

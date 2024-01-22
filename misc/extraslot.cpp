@@ -7,11 +7,10 @@ static uint32_t Gui_numSlots_property_offset = 0xa38; // int
 void GuiComponent_blit_injection() {}
 
 Gui_renderToolBar_t Gui_renderToolBar_original = NULL;
-void Gui_renderToolBar_injection(uchar *gui, float param_1, int param_2, int param_3) {
-    int *slots = (int *) (gui + Gui_numSlots_property_offset);
-    *slots = 9;
+void Gui_renderToolBar_injection(Gui *gui, float param_1, int param_2, int param_3) {
+    gui->num_slots = 9;
     Gui_renderToolBar_original(gui, param_1, param_2, param_3);
-    *slots = 10;
+    gui->num_slots = 10;
 }
 
 __attribute__((constructor)) static void init() {
