@@ -15,4 +15,4 @@ include("$ENV{HOME}/.minecraft-pi/sdk/lib/minecraft-pi-reborn-client/sdk/sdk.cma
 
 # Build
 add_library(expanded-creative SHARED creative.cpp)
-target_link_libraries(expanded-creative mods-headers reborn-patch symbols misc)
+target_link_libraries(expanded-creative mods reborn-patch symbols)

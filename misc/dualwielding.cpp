@@ -16,7 +16,7 @@
 // Symbols
 typedef unsigned char uchar;
 
-static uchar *FoodItem_vtable = (uchar *) 0x10e7b0;
+static uchar *FoodItem_vtable_addr = (uchar *) 0x10e7b0;
 static uchar *BowlFoodItem_vtable = (uchar *) 0x10e990;
 static uchar *WeaponItem_vtable = (uchar *) 0x10ef30;
 static uchar *DiggerItem_vtable = (uchar *) 0x10f668;
@@ -150,7 +150,7 @@ bool check_if_should_swap(uint bai, ItemInstance *right_item, ItemInstance *left
     if (bai & BAI_Interact) {
         if (iright->id == Item_bow->id) return false;
         if (ileft->id == Item_bow->id) return true;
-        CHECK_SWAP_VTABLE(FoodItem_vtable);
+        CHECK_SWAP_VTABLE(FoodItem_vtable_addr);
         CHECK_SWAP_VTABLE(BowlFoodItem_vtable);
         CHECK_SWAP_VTABLE(EggItem_vtable);
         CHECK_SWAP_VTABLE(SnowballItem_vtable);
